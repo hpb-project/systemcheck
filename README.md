@@ -3,10 +3,10 @@
 
 #### 下载并运行
 ```shell
-luxq@hpb-testpc:~$ git clone https://github.com/hpb-project/systemcheck
-luxq@hpb-testpc:~$ cd systemcheck
-luxq@hpb-testpc:~$ chmod +x systemcheck.sh
-luxq@hpb-testpc:~$ sudo ./systemcheck.sh
+hpb@hpb-testpc:~$ git clone https://github.com/hpb-project/systemcheck
+hpb@hpb-testpc:~$ cd systemcheck
+hpb@hpb-testpc:~$ chmod +x systemcheck.sh
+hpb@hpb-testpc:~$ sudo ./systemcheck.sh
 
 ```
 

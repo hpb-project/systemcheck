@@ -1,4 +1,14 @@
 #!/bin/bash 
+
+if [ `id -u` -eq 0 ];
+then
+    echo "开始检查..."
+else
+    echo "请使用root权限执行脚本!"
+    exit 1
+fi
+
+exec 2>/dev/null
 CN_LANG=`echo $LANG | grep CN`
 date=`date +%Y%m%d%H%M`
 logfile=servercheck.txt
@@ -18,6 +28,7 @@ log() {
 
 # 1.检查密码有效期设置
 ## 检查/etc/login.defs
+echo " 1.检查密码有效期设置"
 PASS_MAX_DAYS=`cat /etc/login.defs | grep "PASS_MAX_DAYS" | grep -v \# | awk '{print$2}'`
 PASS_MIN_DAYS=`cat /etc/login.defs | grep "PASS_MIN_DAYS" | grep -v \# | awk '{print$2}'`
 PASS_WARN_AGE=`cat /etc/login.defs | grep "PASS_WARN_AGE" | grep -v \# | awk '{print$2}'`
@@ -31,6 +42,7 @@ else
 fi
 
 # 2.检查密码强度检查配置
+echo " 2.检查密码强度检查配置"
 FIND=`cat /etc/pam.d/system-auth | grep 'passwd requisite pam_cracklib.so'`
 if [ "$FIND" == "" ];
 then
@@ -42,6 +54,7 @@ else
 fi
 
 # 3.检查空口令账号
+echo " 3.检查空口令账号"
 NULLF=`awk -F: '($2 == "") {print $1}' /etc/shadow`
 if [ "$NULLF" != "" ];
 then
@@ -55,6 +68,7 @@ else
 fi
 
 # 4.检查账户锁定配置
+echo " 4.检查账户锁定配置"
 FIND=`cat /etc/pam.d/system-auth | grep 'auth required pam_tally.so'`
 if [ "$FIND" == "" ];
 then
@@ -68,6 +82,7 @@ fi
 
 
 # 5.检查除root之外的账户UID为0
+echo " 5.检查除root之外的账户UID为0"
 mesg=`awk -F: '($3==0) { print $1 }' /etc/passwd | grep -v root`
 if [ "$mesg" != "" ]
 then
@@ -82,7 +97,8 @@ else
     log "5. 未发现UID为0的账户,安全"
 fi
 
-# 6. 检查环境变量包含父目录
+# 6.检查环境变量包含父目录
+echo " 6.检查环境变量包含父目录"
 parent=`echo $PATH | egrep '(^|:)(\.|:|$)'`
 if [ "$parent" != "" ]
 then
@@ -95,7 +111,8 @@ else
     log "6. 环境变量未包含父目录,安全"
 fi
 
-# 7. 检查环境变量包含组权限为777的目录
+# 7.检查环境变量包含组权限为777的目录
+echo " 7.检查环境变量包含组权限为777的目录"
 part=`echo $PATH | tr ':' ' '`
 dir=`find $part -type d \( -perm -002 -o -perm -020 \) -ls`
 if [ "$dir" != "" ]
@@ -109,7 +126,8 @@ else
     log "7. 未发现组权限为777的目录,安全"
 fi
 
-# 8. 远程连接安全性
+# 8.远程连接安全性
+echo " 8.远程连接安全性"
 netrc=`find / -name .netrc`
 rhosts=`find / -name .rhosts`
 failed="0"
@@ -135,7 +153,8 @@ then
     log "   请和管理员联系上述文件是否必要,如非必要,应当删除"
 fi
 
-# 9. 检查umask配置
+# 9.检查umask配置
+echo " 9.检查umask配置"
 bsetting=`cat /etc/profile /etc/bash.bashrc | grep -v "^#" | grep "umask"`
 if [ "$bsetting" == "" ]
 then
@@ -156,7 +175,8 @@ else
     fi
 fi
 
-# 10. 检查重要文件和目录的权限
+# 10.检查重要文件和目录的权限
+echo "10.检查重要文件和目录的权限"
 content=
 p=`ls -ld /etc`
 content=`echo -e "$content\n$p"`
@@ -181,7 +201,8 @@ log "建议:"
 log "   请仔细检查以上文件和目录的权限,如果权限太低,请及时修改"
 
 
-# 11. 检查未授权的SUID/SGID文件
+# 11.检查未授权的SUID/SGID文件
+echo "11.检查未授权的SUID/SGID文件"
 files=
 for PART in `grep -v "^#" /etc/fstab | awk '($6 != "0") {print $2 }'`;
 do
@@ -202,7 +223,8 @@ else
     log "11. 未发现存在SUID和SGID的文件,安全"
 fi
 
-# 12. 检查任何人都有写权限的目录
+# 12.检查任何人都有写权限的目录
+echo "12.检查任何人都有写权限的目录"
 files=
 for PART in `awk '($3 == "ext2" || $3 == "ext3" || $3 == "ext4") {print $2 }' /etc/fstab`;do
     FIND=`find $PART -xdev -type d \( -perm -0002 -a ! -perm -1000 \) -print`
@@ -223,7 +245,8 @@ else
 fi
 
 
-# 13. 检查任何人都有写权限的文件
+# 13.检查任何人都有写权限的文件
+echo "13.检查任何人都有写权限的文件"
 files=
 for PART in `grep -v "#" /etc/fstab | awk '($6 != "0") {print $2 }'`; do 
     FIND=`find $PART -xdev -type f \( -perm -0002 -a ! -perm -1000 \) -print `
@@ -243,7 +266,8 @@ else
     log "13. 未发现任何人都有写权限的文件,安全"
 fi
 
-# 14. 检查没有属主的文件
+# 14.检查没有属主的文件
+echo "14.检查没有属主的文件"
 files=
 for PART in `grep -v "#" /etc/fstab | awk '($6 != "0") {print $2 }'`; do 
     FIND=`find $PART -nouser -o -nogroup -print `
@@ -263,7 +287,8 @@ else
     log "14. 未发现没有属主的文件,安全"
 fi
 
-# 15. 检查异常的隐藏文件
+# 15.检查异常的隐藏文件
+echo "15.检查异常的隐藏文件"
 files=
 FIND=`find / -name "..*" -print -xdev `
 if [ "$FIND" != "" ]
@@ -286,7 +311,8 @@ else
     log "15. 未发现可疑隐藏文件,安全"
 fi
 
-# 16. 检查登录超时设置
+# 16.检查登录超时设置
+echo "16.检查登录超时设置"
 tmout=`cat /etc/profile | grep -v "^#" | grep TMOUT `
 if [ "$tmout" == "" ]
 then
@@ -298,6 +324,7 @@ else
 fi
 
 # 17. 检查ssh 和telnet运行状态
+echo "17.检查ssh 和telnet运行状态"
 ssh=`service ssh status | grep running`
 telnet=`service telnet status | grep running`
 if [ "$ssh" != "" ] && [ "$telnet" == "" ]
@@ -317,7 +344,8 @@ else
 fi
 
 
-# 18. root远程登录限制
+# 18.root远程登录限制
+echo "18.root远程登录限制"
 permit=`cat /etc/ssh/sshd_config | grep -v "^#" | grep "PermitRootLogin" | awk "{print $2}"`
 if [ "$permit" == "yes" ]
 then
@@ -332,6 +360,7 @@ fi
 
 
 # 19. 检查运行的服务
+echo "19.检查运行的服务"
 chkconfig=`which chkconfig`
 bcheck=1
 if [ "$chkconfig" == "" ]
@@ -366,6 +395,7 @@ else
 fi
 
 # 20. 检查core dump 状态 
+echo "20.检查core dump 状态 "
 SOFTFIND=`cat /etc/security/limits.conf | grep -v "^#" | grep "* soft core 0"`
 HARDFIND=`cat /etc/security/limits.conf | grep -v "^#" | grep "* hard core 0"`
 if [ "$SOFTFIND" != "" ] && [ "$HARDFIND" != "" ]
@@ -379,3 +409,4 @@ else
     log "   * hard core 0"
 fi
 
+echo "检查完成, 请仔细阅读${logfile}文件"
