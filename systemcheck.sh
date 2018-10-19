@@ -409,4 +409,34 @@ else
     log "   * hard core 0"
 fi
 
+# 21. 检查rsyslog状态
+echo "21.检查rsyslog状态"
+en=`systemctl is-enabled rsyslog`
+conf=`cat /etc/rsyslog.conf | grep -v "^#" | grep "*.err;kern.debug;daemon.notice /var/adm/messages"`
+if [ "$en" != "enabled" ]
+then
+    log "21. rsyslog未启动,不安全"
+    log "建议:"
+    log "   在/etc/rsyslog.conf中增加'*.err;kern.debug;daemon.notice /var/adm/messages'"
+    log "   并执行以下命令:"
+    log "   sudo mkdir /var/adm"
+    log "   sudo touch /var/adm/messages"
+    log "   sudo chmod 666 /var/adm/messages"
+    log "   sudo systemctl restart rsyslog"
+else
+    if [ "$conf" == "" ];
+    then
+        log "21. 检查rsyslog配置"
+        log "   在/etc/rsyslog.conf中增加'*.err;kern.debug;daemon.notice /var/adm/messages'"
+        log "   并执行以下命令:"
+        log "   sudo mkdir /var/adm"
+        log "   sudo touch /var/adm/messages"
+        log "   sudo chmod 666 /var/adm/messages"
+        log "   sudo systemctl restart rsyslog"
+    else
+        log "21. 检查rsyslog配置,安全"
+    fi
+fi
+
+
 echo "检查完成, 请仔细阅读${logfile}文件"
