@@ -43,7 +43,7 @@ fi
 
 # 2.检查密码强度检查配置
 echo " 2.检查密码强度检查配置"
-FIND=`cat /etc/pam.d/system-auth | grep 'passwd requisite pam_cracklib.so'`
+FIND=`cat /etc/pam.d/systemd-auth | grep 'passwd requisite pam_cracklib.so'`
 if [ "$FIND" == "" ];
 then
     log "2. 未配置密码强度检查,不安全"
@@ -69,7 +69,7 @@ fi
 
 # 4.检查账户锁定配置
 echo " 4.检查账户锁定配置"
-FIND=`cat /etc/pam.d/system-auth | grep 'auth required pam_tally.so'`
+FIND=`cat /etc/pam.d/systemd-auth | grep 'auth required pam_tally.so'`
 if [ "$FIND" == "" ];
 then
     log "4. 未配置账户锁定策略,不安全"
@@ -155,14 +155,14 @@ fi
 
 # 9.检查umask配置
 echo " 9.检查umask配置"
-bsetting=`cat /etc/profile /etc/bash.bashrc | grep -v "^#" | grep "umask"`
+bsetting=`cat /etc/profile /etc/bash.bashrc | grep -v "^#" | grep "umask"| awk '{print $2}'`
 if [ "$bsetting" == "" ]
 then
     log "9. umask 未配置,不安全"
     log "建议:"
     log "   执行 echo \"umask 027\" >> /etc/profile 增加umask配置"
 else
-    UMASK=`echo $bsetting | grep 027`
+    UMASK=`echo "$bsetting" | grep 027 | uniq`
     if [ "$UMASK" != "027" ]
     then
         log "9. umask 配置值不安全"
@@ -353,7 +353,7 @@ then
     log "检查结果如下:"
     log "  PermitRootLogin $permit"
     log "建议:"
-    log "  修改/etc/ssh/sshd_config文件, 将PermitRootLogin　的值改为yes"
+    log "  修改/etc/ssh/sshd_config文件, 将PermitRootLogin　的值改为 no"
 else
     log "18. 不允许root远程登录,安全"
 fi
