@@ -427,6 +427,7 @@ else
     if [ "$conf" == "" ];
     then
         log "21. 检查rsyslog配置"
+        log "建议:"
         log "   在/etc/rsyslog.conf中增加'*.err;kern.debug;daemon.notice /var/adm/messages'"
         log "   并执行以下命令:"
         log "   sudo mkdir /var/adm"
