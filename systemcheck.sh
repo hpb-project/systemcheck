@@ -439,5 +439,28 @@ else
     fi
 fi
 
+# 22. boe功能兼容性检测
+echo "22.boe功能兼容性检测"
+sudo ./boetest >/dev/null 2>&1
+result=$?
+if [ "$result" == "1" ]
+then
+    log "22. boe功能兼容性检测"
+    log "未检测到boe卡,跳过此项检查"
+else 
+    if [ "$result" == "3" ]
+    then
+        ver=`uname -r`
+        log "22. boe功能兼容性检测, 未通过"
+        log "检查结果如下:"
+        log "   系统信息$ver"
+        log "建议:"
+        log "   联系HPB工作人员"
+    elif [ "$result" == "0" ]
+    then
+        log "22. boe功能兼容性检测, 通过"
+    fi
+fi
+
 
 echo "检查完成, 请仔细阅读${logfile}文件"
